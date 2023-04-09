@@ -36,12 +36,12 @@ const config: HardhatUserConfig = {
       accounts: [PRIVATE_KEY],
       gasPrice: 80_000_000_000,
     },
-    bscTestnet: {
-      url: 'https://data-seed-prebsc-2-s1.binance.org:8545',
-      chainId: 97,
-      gasPrice: 80_000_000_000,
-      accounts: [`0x${process.env.BSC_TESTNET_DEPLOYER_PRIVATE_KEY}`],
-    },
+    // bscTestnet: {
+    //   url: 'https://data-seed-prebsc-2-s1.binance.org:8545',
+    //   chainId: 97,
+    //   gasPrice: 80_000_000_000,
+    //   accounts: [`0x${process.env.BSC_TESTNET_DEPLOYER_PRIVATE_KEY}`],
+    // },
   },
   solidity: {
     compilers: [
