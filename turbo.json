@@ -1,0 +1,31 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "test": {},
+    "generate": {},
+    "storybook": {
+      "cache": false
+    },
+    "build-storybook": {
+      "outputs": ["storybook-static/**"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "dev": {
+      "cache": false,
+      "env": ["COINMARKETCAP_API_KEY"]
+    },
+    "sol:test": {
+      "outputs": ["coverage/**"]
+    },
+    "compile": {
+      "cache": false
+    },
+    "start": { "cache": false }
+  }
+}
