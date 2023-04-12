@@ -49,3 +49,7 @@ yarn-error.log*
 *.ts.map
 *.js
 *.js.map
+
+# vscode
+.vscode
+*.code-workspace

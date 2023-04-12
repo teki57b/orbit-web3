@@ -6,6 +6,7 @@ async function main() {
   const helloWorld = await deployContract('HelloWorld', ['Teki Greeting'], true);
   console.log(`Deploying contracts with account: ${deployer.address}`);
   console.log(`HelloWorld address:${helloWorld.address}`);
+  console.log(`HelloWorld greeting:${await helloWorld.greeting()}`);
   process.exit(0);
 }
 
