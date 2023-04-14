@@ -31,7 +31,6 @@ const config: HardhatUserConfig = {
       chainId: 31337,
       allowUnlimitedContractSize: true,
       accounts: [PRIVATE_KEY],
-      initialBaseFeePerGas: 0,
     },
     goerli: {
       url: GOERLI_RPC_URL,
