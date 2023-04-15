@@ -4,12 +4,9 @@ import Head from 'next/head';
 import Image from 'next/image';
 import styles from 'styles/Home.module.scss';
 
-import dynamic from 'next/dynamic';
-import { Balance } from './balance';
-
-const ConnectButton = dynamic(() => import('../components/Button/ConnectButton'), {
-  ssr: false
-});
+import { Balance } from '../components/TokenBalance';
+import { Deposit } from '../components/Deposit';
+import ConnectButton from '../components/Button/ConnectButton';
 
 const Home: NextPage = () => (
   <>
@@ -22,6 +19,7 @@ const Home: NextPage = () => (
       </div>
 
       <Balance />
+      <Deposit />
 
       <div className={styles.center}>
         <Image

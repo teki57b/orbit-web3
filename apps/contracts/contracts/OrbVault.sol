@@ -31,7 +31,6 @@ contract OrbVault {
 
     function deposit(uint256 amountToDeposit) external payable {
         require(amountToDeposit == msg.value, "incorrect ETH amount");
-        totalAsset += amountToDeposit;
         uint256 sharesToMint;
         if (totalSupply == 0) {
             sharesToMint = amountToDeposit;
@@ -39,6 +38,7 @@ contract OrbVault {
             uint unitPrice = totalAsset / totalSupply;
             sharesToMint = amountToDeposit / unitPrice;
         }
+        totalAsset += amountToDeposit;
         _mint(msg.sender, sharesToMint);
         emit Deposited(amountToDeposit, sharesToMint);
     }
