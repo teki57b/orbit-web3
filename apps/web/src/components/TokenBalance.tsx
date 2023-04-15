@@ -4,7 +4,8 @@ export const Balance = () => {
   const { address } = useAccount();
   const { data, isError, isLoading } = useBalance({
     address,
-    token: process.env.NEXT_PUBLIC_ORB_TOKEN_ADDRESS as `0x${string}`
+    token: process.env.NEXT_PUBLIC_ORB_TOKEN_ADDRESS as `0x${string}`,
+    watch: true
   });
 
   if (isLoading) return <div>Fetching balance…</div>;

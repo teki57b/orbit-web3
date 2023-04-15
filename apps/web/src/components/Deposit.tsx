@@ -14,21 +14,17 @@ export const Deposit = () => {
     signerOrProvider: signData
   });
   const deposit = async () => {
-    console.log(amount);
-    const tx = await vaultContract?.deposit(utils.parseEther(amount), {
-      value: utils.parseEther(amount)
+    const ethAmount = utils.parseEther(amount);
+    const tx = await vaultContract?.deposit(ethAmount, {
+      value: ethAmount
     });
     await tx?.wait();
   };
 
   return (
     <div>
-      <input
-        style={{ color: 'black' }}
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
-      <button type="button" onClick={() => deposit()}>
+      <input className="text-black" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <button className="ml-2" type="button" onClick={() => deposit()}>
         Deposit
       </button>
     </div>
