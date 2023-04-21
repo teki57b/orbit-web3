@@ -3,13 +3,13 @@
 import Web3 from 'web3';
 
 export class Vault {
-  private _host: string = 'http://127.0.0.1';
+  protected _host: string = 'http://127.0.0.1';
 
-  private _port: string = '8545';
+  protected _port: string = '8545';
 
-  private _balance: string = '0';
+  protected _balance: string = '0';
 
-  private _account: string = '';
+  protected _account: string = '';
 
   protected _client: Web3;
 
