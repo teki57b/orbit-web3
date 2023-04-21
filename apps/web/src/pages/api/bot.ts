@@ -3,8 +3,9 @@ import { Vault } from './utils/utils';
 
 const { CronJob } = require('cron');
 
+const account = '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199';
 const cronPattern: string = '*/20 * * * * *'; // every 20 seconds
-const myVault = new Vault('0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199');
+const myVault = new Vault(account);
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   res

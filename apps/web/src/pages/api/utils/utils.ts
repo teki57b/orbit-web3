@@ -7,8 +7,6 @@ export class Vault {
 
   protected _port: string = '8545';
 
-  protected _balance: string = '0';
-
   protected _account: string = '';
 
   protected _client: Web3;
@@ -16,15 +14,9 @@ export class Vault {
   constructor(account: string) {
     this._client = new Web3(`${this._host}:${this._port}`);
     this._account = account;
-    this.syncBalance();
   }
 
-  async syncBalance() {
-    this._balance = await this._client.eth.getBalance(this._account);
-  }
-
-  async getBalance(): Promise<string> {
-    await this.syncBalance();
-    return this._balance;
+  getBalance(): Promise<string> {
+    return this._client.eth.getBalance(this._account);
   }
 }
