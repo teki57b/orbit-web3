@@ -47,7 +47,7 @@ yarn-error.log*
 # ts built files
 *.d.ts
 *.ts.map
-*.js
+# *.js
 *.js.map
 
 # vscode
