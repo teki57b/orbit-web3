@@ -18,7 +18,7 @@
     "clean": "rimraf ./build/",
     "build": "tsc -p tsconfig.build.json",
     "compile": "npx hardhat compile",
-    "start": "npx hardhat node",
+    "dev": "npx hardhat node",
     "console": "npx hardhat console --network",
     "flatten": "npx hardhat flatten",
     "lint": "yarn prettier --check **/*",
