@@ -1,55 +1,71 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
-import "./OrbToken.sol";
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract OrbVault {
-    OrbToken public immutable token;
+contract OrbVault is ERC20, Ownable {
+    ERC20 public immutable managingToken;
 
-    uint256 public totalSupply;
-    uint256 public totalAsset;
-    mapping(address => uint256) public balanceOf;
+    string private _name;
+    string private _symbol;
+    uint8 private _decimals;
 
-    constructor(address _token) {
-        token = OrbToken(_token);
+    uint256 public totalDebt;
+
+    constructor(address _token) ERC20("", "") {
+        managingToken = ERC20(_token);
+        // set _name and _symbol with the values from managingToken
+        _name = string(abi.encodePacked(managingToken.name(), " oVault"));
+        _symbol = string(abi.encodePacked("ov", managingToken.symbol()));
+        _decimals = managingToken.decimals();
     }
 
-    event Deposited(uint256 assetDeposited, uint256 shareMinted);
-    event Withdrawn(uint256 assetWithdrawn, uint256 shareBurnt);
-
-    function _mint(address _to, uint256 _shares) private {
-        token.mint(_to, _shares);
-        totalSupply += _shares;
-        balanceOf[_to] += _shares;
+    function name() public view virtual override returns (string memory) {
+        return _name;
     }
 
-    function _burn(address _from, uint256 _shares) private {
-        token.burn(_from, _shares);
-        totalSupply -= _shares;
-        balanceOf[_from] -= _shares;
+    function symbol() public view virtual override returns (string memory) {
+        return _symbol;
     }
 
-    function deposit(uint256 amountToDeposit) external payable {
-        require(amountToDeposit == msg.value, "incorrect ETH amount");
-        uint256 sharesToMint;
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
+    }
+
+    function _totalAssets() internal view returns (uint256) {
+        return managingToken.balanceOf(address(this)) + totalDebt;
+    }
+
+    function totalAssets() external view returns (uint256) {
+        return _totalAssets();
+    }
+
+    function _issueShares(
+        address _to,
+        uint256 _amount
+    ) internal returns (uint256) {
+        uint256 shares_ = 0;
+        uint256 totalSupply = totalSupply();
         if (totalSupply == 0) {
-            sharesToMint = amountToDeposit;
+            shares_ = _amount;
         } else {
-            uint unitPrice = totalAsset / totalSupply;
-            sharesToMint = amountToDeposit / unitPrice;
+            shares_ = (_amount * totalSupply) / _totalAssets();
         }
-        totalAsset += amountToDeposit;
-        _mint(msg.sender, sharesToMint);
-        emit Deposited(amountToDeposit, sharesToMint);
+        _mint(_to, _amount);
+        return shares_;
     }
 
-    function withdraw(uint256 _shares) external {
-        require(balanceOf[msg.sender] >= _shares, "not enough shares");
-        uint256 unitPrice = totalAsset / totalSupply;
-        uint256 amountToWithdraw = unitPrice * _shares;
-        totalAsset -= amountToWithdraw;
-        _burn(msg.sender, _shares);
-        payable(msg.sender).transfer(amountToWithdraw);
-        emit Withdrawn(amountToWithdraw, _shares);
+    function deposit(uint256 _amount) external returns (uint256) {
+        require(
+            _amount > 0,
+            "vault: deposit amount must be greater than 0"
+        );
+        uint256 shares_ = _issueShares(msg.sender, _amount);
+        managingToken.transferFrom(msg.sender, address(this), _amount);
+        return shares_;
     }
+
+
 }
