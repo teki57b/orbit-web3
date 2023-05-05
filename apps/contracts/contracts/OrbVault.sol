@@ -67,5 +67,30 @@ contract OrbVault is ERC20, Ownable {
         return shares_;
     }
 
+    function _redeemShares(
+        address _from,
+        uint256 _shares
+    ) internal returns (uint256) {
+        uint256 amount_ = (_shares * _totalAssets()) / totalSupply();
+        _burn(_from, _shares);
+        return amount_;
+    }
+
+    function withdraw(uint256 _shares) external returns (uint256) {
+        require(
+            _shares > 0,
+            "vault: withdraw shares must be greater than 0"
+        );
+        uint256 amount_ = _redeemShares(msg.sender, _shares);
+        managingToken.transfer(msg.sender, amount_);
+        return amount_;
+    }
+
+    // increase totalDebt by APY
+    function accrueDebt(uint256 _amount) external onlyOwner {
+        totalDebt += _amount;
+    }
+
+
 
 }

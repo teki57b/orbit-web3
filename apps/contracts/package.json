@@ -21,6 +21,7 @@
     "dev": "npx hardhat node",
     "console": "npx hardhat console --network",
     "flatten": "npx hardhat flatten",
+    "status": "npx hardhat run scripts/v1/status.ts",
     "lint": "yarn prettier --check **/*",
     "lint:fix": "yarn prettier --write **/*",
     "sol:test": "npx hardhat coverage --testfiles \"test/*.ts\" --solcoverjs .solcover.js",
