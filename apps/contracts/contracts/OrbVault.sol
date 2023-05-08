@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import "./interfaces/StrategyInterface.sol";
+import "./interfaces/VaultInterface.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract OrbVault is ERC20, Ownable {
-    ERC20 public immutable managingToken;
+
+contract OrbVault is ERC20, Ownable, VaultInterface {
+    ERC20 public immutable want;
 
     string private _name;
     string private _symbol;
@@ -14,12 +17,14 @@ contract OrbVault is ERC20, Ownable {
 
     uint256 public totalDebt;
 
+    mapping (address => StrategyParams) private _strategies;
+
     constructor(address _token) ERC20("", "") {
-        managingToken = ERC20(_token);
+        want = ERC20(_token);
         // set _name and _symbol with the values from managingToken
-        _name = string(abi.encodePacked(managingToken.name(), " oVault"));
-        _symbol = string(abi.encodePacked("ov", managingToken.symbol()));
-        _decimals = managingToken.decimals();
+        _name = string(abi.encodePacked(want.name(), " oVault"));
+        _symbol = string(abi.encodePacked("ov", want.symbol()));
+        _decimals = want.decimals();
     }
 
     function name() public view virtual override returns (string memory) {
@@ -35,7 +40,7 @@ contract OrbVault is ERC20, Ownable {
     }
 
     function _totalAssets() internal view returns (uint256) {
-        return managingToken.balanceOf(address(this)) + totalDebt;
+        return want.balanceOf(address(this)) + totalDebt;
     }
 
     function totalAssets() external view returns (uint256) {
@@ -58,12 +63,9 @@ contract OrbVault is ERC20, Ownable {
     }
 
     function deposit(uint256 _amount) external returns (uint256) {
-        require(
-            _amount > 0,
-            "vault: deposit amount must be greater than 0"
-        );
+        require(_amount > 0, "vault: deposit amount must be greater than 0");
         uint256 shares_ = _issueShares(msg.sender, _amount);
-        managingToken.transferFrom(msg.sender, address(this), _amount);
+        want.transferFrom(msg.sender, address(this), _amount);
         return shares_;
     }
 
@@ -77,20 +79,77 @@ contract OrbVault is ERC20, Ownable {
     }
 
     function withdraw(uint256 _shares) external returns (uint256) {
-        require(
-            _shares > 0,
-            "vault: withdraw shares must be greater than 0"
-        );
+        require(_shares > 0, "vault: withdraw shares must be greater than 0");
         uint256 amount_ = _redeemShares(msg.sender, _shares);
-        managingToken.transfer(msg.sender, amount_);
+        want.transfer(msg.sender, amount_);
         return amount_;
     }
 
-    // increase totalDebt by APY
-    function accrueDebt(uint256 _amount) external onlyOwner {
-        totalDebt += _amount;
+    function pricePerShare() external view returns (uint256) {
+        return _totalAssets() / totalSupply();
     }
 
+    function report(
+        uint256 _gain,
+        uint256 _loss,
+        uint256 _debtPayment
+    ) external returns (uint256) {
+        _strategies[msg.sender].totalGain += _gain;
+        uint credit = this.creditAvailable();
+        if (credit > 0) {
+            _strategies[msg.sender].totalDebt += credit;
+            totalDebt += credit;
+        }
+        if (_gain < credit) {
+            want.transfer(msg.sender, credit - _gain);
+        }
+        if (_gain > credit) {
+            want.transferFrom(msg.sender, address(this), _gain - credit);
+        }
 
+        // update strategy param
+        _strategies[msg.sender].totalLoss += _loss;
+        _strategies[msg.sender].totalDebt -= _debtPayment;
+        totalDebt -= _debtPayment;
+        _strategies[msg.sender].lastReport = block.timestamp;
+        
+        // FIXME: should return debt outstanding
+        return 0;
 
+    }
+
+    /**
+     * @dev Returns the amount of credit available for the given address.
+     * Strategy calls this method to determine how much it can borrow.
+     */
+    function creditAvailable() external view returns (uint256) {
+        // FIXME: all to the calling strategy
+        return want.balanceOf(address(this));
+    }
+
+    function addStrategy(address _strategy) external onlyOwner {
+        require(_strategy != address(0), "vault: strategy address is zero");
+        require(_strategies[_strategy].activation == 0, "vault: strategy already exists");
+        _strategies[_strategy] = StrategyParams({
+            performanceFee: 0,
+            activation: block.timestamp,
+            debtRatio: 0,
+            minDebtPerHarvest: 0,
+            maxDebtPerHarvest: 0,
+            lastReport: 0,
+            totalDebt: 0,
+            totalGain: 0,
+            totalLoss: 0
+        });
+    }
+
+    function token() external view override returns (address) {
+        return address(want);
+    }
+
+    function strategies(
+        address _strategy
+    ) external view override returns (StrategyParams memory) {
+        return _strategies[_strategy];
+    }
 }
