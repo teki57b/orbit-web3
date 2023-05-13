@@ -22,8 +22,8 @@ contract OrbVault is ERC20, Ownable, VaultInterface {
     constructor(address _token) ERC20("", "") {
         want = ERC20(_token);
         // set _name and _symbol with the values from managingToken
-        _name = string(abi.encodePacked(want.name(), " oVault"));
-        _symbol = string(abi.encodePacked("ov", want.symbol()));
+        _name = string(abi.encodePacked(want.name(), " Vault"));
+        _symbol = string(abi.encodePacked("v", want.symbol()));
         _decimals = want.decimals();
     }
 

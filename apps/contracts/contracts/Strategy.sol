@@ -19,10 +19,11 @@ contract Strategy {
 
     uint256 public maxReportDelay;
 
-    constructor(address _vault) {
+    constructor(address _vault, address _market) {
         vault = VaultInterface(_vault);
         want = IERC20(vault.token());
         want.approve(_vault, type(uint256).max);
+        market = MarketInterface(_market);
         keeper = msg.sender;
     }
 
@@ -69,6 +70,7 @@ contract Strategy {
     function adjustPosition() internal {
         uint256 _balance = want.balanceOf(address(this));
         if (_balance > 0) {
+            want.approve(address(market), _balance);
             market.mint(_balance);
         }
     }
