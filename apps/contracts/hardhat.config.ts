@@ -21,11 +21,16 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY || 'privatKey';
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 const config: HardhatUserConfig = {
-  defaultNetwork: 'localhost',
+  defaultNetwork: 'buildbear',
   networks: {
+    buildbear: {
+      url: 'https://rpc.buildbear.io/inappropriate-barriss-offee-bf9908dd',
+      accounts: [PRIVATE_KEY],
+    },
     hardhat: {
-      chainId: 31337,
-      allowUnlimitedContractSize: true,
+      forking: {
+        url: 'https://opt-mainnet.g.alchemy.com/v2/ot1uJgmZJ1203wve1gNsVfP_STY9S3SX',
+      } 
     },
     localhost: {
       chainId: 31337,
