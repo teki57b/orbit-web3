@@ -6,6 +6,7 @@ import "./interfaces/VaultInterface.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 
 contract OrbVault is ERC20, Ownable, VaultInterface {
@@ -18,10 +19,13 @@ contract OrbVault is ERC20, Ownable, VaultInterface {
     uint256 public totalDebt;
 
     mapping (address => StrategyParams) private _strategies;
+    // withdrawal queue
+    uint256 public constant MAX_STRATEGIES = 10;
+    address[] private _withdrawalQueue;
 
     constructor(address _token) ERC20("", "") {
         want = ERC20(_token);
-        // set _name and _symbol with the values from managingToken
+        // set _name and _symbol with the values from want
         _name = string(abi.encodePacked(want.name(), " Vault"));
         _symbol = string(abi.encodePacked("v", want.symbol()));
         _decimals = want.decimals();
@@ -58,14 +62,14 @@ contract OrbVault is ERC20, Ownable, VaultInterface {
         } else {
             shares_ = (_amount * totalSupply) / _totalAssets();
         }
-        _mint(_to, _amount);
+        _mint(_to, shares_);
         return shares_;
     }
 
     function deposit(uint256 _amount) external returns (uint256) {
         require(_amount > 0, "vault: deposit amount must be greater than 0");
-        uint256 shares_ = _issueShares(msg.sender, _amount);
         want.transferFrom(msg.sender, address(this), _amount);
+        uint256 shares_ = _issueShares(msg.sender, _amount);
         return shares_;
     }
 
@@ -74,9 +78,46 @@ contract OrbVault is ERC20, Ownable, VaultInterface {
         uint256 _shares
     ) internal returns (uint256) {
         uint256 amount_ = (_shares * _totalAssets()) / totalSupply();
+        uint256 totalLoss = 0;
+        if (amount_ > want.balanceOf(address(this))) {
+            for (uint256 i = 0; i < _withdrawalQueue.length; i++) {
+                uint256 vaultBalance = want.balanceOf(address(this));
+                StrategyInterface strategy = StrategyInterface(_withdrawalQueue[i]);
+                StrategyParams storage params = _strategies[_withdrawalQueue[i]];
+
+                uint256 amountNeeded = amount_ - vaultBalance;
+                amountNeeded = Math.min(amountNeeded, params.totalDebt);
+                if (amountNeeded == 0) {
+                    continue;
+                }
+                uint256 loss = strategy.withdraw(amountNeeded);
+                uint256 withdrawn = want.balanceOf(address(this)) - vaultBalance;
+
+                if (loss > 0) {
+                    params.totalLoss += loss;
+                    amount_ -= loss;
+                    totalLoss += loss;
+                }
+                params.totalDebt -= withdrawn + loss;
+                totalDebt -= withdrawn + loss;
+
+                if (amount_ <= want.balanceOf(address(this))) {
+                    break;
+                }
+            }
+        }
+
+        uint256 afterWithdraw = want.balanceOf(address(this));
+
+        if (amount_ > afterWithdraw) {
+            amount_ = afterWithdraw;
+            _shares = amount_ * totalSupply() / _totalAssets();
+        }
+        
         _burn(_from, _shares);
         return amount_;
     }
+
 
     function withdraw(uint256 _shares) external returns (uint256) {
         require(_shares > 0, "vault: withdraw shares must be greater than 0");
@@ -128,6 +169,7 @@ contract OrbVault is ERC20, Ownable, VaultInterface {
     }
 
     function addStrategy(address _strategy) external onlyOwner {
+        require(_withdrawalQueue.length < MAX_STRATEGIES, "vault: max strategies reached");
         require(_strategy != address(0), "vault: strategy address is zero");
         require(_strategies[_strategy].activation == 0, "vault: strategy already exists");
         _strategies[_strategy] = StrategyParams({
@@ -141,6 +183,7 @@ contract OrbVault is ERC20, Ownable, VaultInterface {
             totalGain: 0,
             totalLoss: 0
         });
+        _withdrawalQueue.push(_strategy);
     }
 
     function token() external view override returns (address) {
