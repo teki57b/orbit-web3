@@ -43,3 +43,13 @@ yarn-error.log*
 **/public/workbox-*.js
 **/public/sw.js
 **/public/worker-*.js
+
+# ts built files
+*.d.ts
+*.ts.map
+# *.js
+*.js.map
+
+# vscode
+.vscode
+*.code-workspace

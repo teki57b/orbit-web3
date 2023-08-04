@@ -1,19 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-shadow */
-import { useAccount, useConnect, useDisconnect, useEnsAvatar, useEnsName } from 'wagmi';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 const ConnectButton = () => {
   const { address, connector, isConnected } = useAccount();
-  const { data: ensAvatar } = useEnsAvatar({ address });
-  const { data: ensName } = useEnsName({ address });
   const { connect, connectors, error, isLoading, pendingConnector } = useConnect();
   const { disconnect } = useDisconnect();
 
   if (isConnected) {
     return (
       <div>
-        <img src={ensAvatar || ''} alt="ENS Avatar" />
-        <div>{ensName ? `${ensName} (${address})` : address}</div>
+        <div>{address}</div>
         <div>Connected to {connector?.name}</div>
         <button type="button" onClick={() => disconnect()}>
           Disconnect

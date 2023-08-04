@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { deployContract, deployUpgradeableContract } from './util';
+import { deployContract, deployUpgradeableContract } from '../util';
 
 async function main() {
   try {
